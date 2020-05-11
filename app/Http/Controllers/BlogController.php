@@ -7,6 +7,10 @@ use App\Blog;
 
 class BlogController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth', ['except' => ['index', 'show']]);
+    }
     /**
      * Display a listing of the resource.
      *
@@ -58,7 +62,8 @@ class BlogController extends Controller
      */
     public function show($id)
     {
-        //
+        $post = Blog::findOrFail($id);
+        return view('blog.show')->with('post', $post);
     }
 
     /**
@@ -69,7 +74,11 @@ class BlogController extends Controller
      */
     public function edit($id)
     {
-        //
+        $post = Blog::find($id);
+        if (auth()->user()->id !== $post->user_id) {
+            return redirect('/posts');
+        }
+        return view('blog.update')->with('post', $post);
     }
 
     /**
@@ -86,7 +95,7 @@ class BlogController extends Controller
             'body' => 'required',
         ]);
 
-        $post = Blog::findOrFail($id);
+        $post = Post::findOrFail($id);
         $post->title = $request->input('title');
         $post->body = $request->input('body');
         $post->save();
@@ -102,6 +111,12 @@ class BlogController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $post = Blog::findOrFail($id);
+        if (auth()->user()->id !== $post->user_id) {
+            return redirect('/posts');
+        }
+
+        $post->delete();
+        return redirect('/posts');
     }
 }
